@@ -1,0 +1,328 @@
+#####################
+## CS 544 Project ##
+## 6/26/2019       ##
+## Emily Darigo    ##
+######################
+## Dataset Details
+
+## The IMB Employee Performance and Attrition dataset is a fictional 
+## dataset obtained through kaggle. The data is developed by IBM data 
+## scientists to test their own models on real employee data. The data 
+## represents employees over a 10 year period.  Parts of data, such as 
+## job role, department and standard hours are likely based off of real 
+## IBM employees. The dataset description does not specify how the IBM 
+## data scientists created each record.
+
+############################################
+## Objective
+
+## The purpose of this project is to analyze connections between various 
+## employee factors and if they have an influence on employee performance 
+## and attrition. The code used on the fictional data can be applied to live 
+## data in other organizations.
+
+############################################
+## Variable Focus
+
+## There are a total of 35 variables in the dataset. In addition to performance 
+## and attrition, this project will focus on employee job roles, job satisfaction, 
+## number of years in their current role, and monthly income.
+
+employees <- read.csv('~/Desktop/BU MET/544/Project/WA_Fn-UseC_-HR-Employee-Attrition.csv', stringsAsFactors = FALSE)
+
+############################################
+## Analysis for one categorical variable
+
+## One influence on employee performance and attrition may come from the 
+## type of job. From the sorted table, most of the surveyed employees came 
+## from a sales executive, research scientist and laboratory technician position. 
+## Human resources represents the smallest group in the survey. 
+
+############################################
+library(plotly)
+job.role <- table(employees$JobRole)
+jobrole.table <- as.data.frame(sort(job.role))
+j <- plot_ly(
+  type = 'table',
+  header = list(
+    values = c('<b>Job Role</b>', '<b>Number of Employees</b>'),
+    line = list(color = '#506784'),
+    fill = list(color = 'rgb(8,48,107)'),
+    align = c('left','center'),
+    font = list(color = 'white', size = 12)
+  ),
+  cells = list(
+    values = rbind(as.character(jobrole.table$Var1), jobrole.table$Freq),
+    line = list(color = '#506784'),
+    fill = list(color = c('rgb(158,202,225)', 'white')),
+    align = c('left', 'center'),
+    font = list(color = c('black'), size = 12)
+  ))
+j
+
+
+## The bar chart is another representation of employees that are in each job at 
+## IBM. This chart shows how much more employees are a part of the Sales 
+## Executive, Research Scientist, and Laboratory Technician roles compared to 
+## the other roles.
+
+p <- plot_ly(employees, x = ~JobRole, type = "histogram")
+p
+
+############################################
+## Analysis for one numerical variable
+## The length of employement at IBM can be another factor in attrition and 
+## performance rates. This dataset only has employees that have just started 
+## (have not yet reached 1 year) up to 18 years. In a real employee dataset, 
+## it is likely that there would be employees who have been with the company 
+## longer than 18 years, depending on the age of the company. 
+
+## There are three noticable spikes at 0, 2, and 7 years. There are significantly 
+## less employees from the 10 year mark to the 18 year mark.
+num.var <- data.frame(table(employees$YearsInCurrentRole))
+years.role <- plot_ly(num.var, x = ~Var1, y = ~Freq, type = "bar") %>%
+  layout(xaxis = list(title = "Years in Current Role", tickangle = -45),
+         yaxis = list(title = "Count"),
+         margin = list(b = 100))
+years.role
+
+############################################
+## Job Roles and Attrition
+## To continue with the first categorical analysis, there may be some insight 
+## between the current role of an employee and if they left the firm or not. 
+job.names <- names(job.role)
+attrition.no <- c(table(employees$JobRole[employees$Attrition == "No"]))
+attrition.yes <- c(table(employees$JobRole[employees$Attrition == "Yes"]))
+attrition.role <- data.frame(job.names, attrition.no, attrition.yes)
+
+aa <- plot_ly(attrition.role, x = ~job.names, y = ~attrition.yes, type = 'bar', name = 'Left Firm') %>%
+  add_trace(y = ~attrition.no, name = 'Currently employeed') %>%
+  layout(xaxis = list(title = 'Job Role', yaxis = list(title = 'Count'), barmode = 'group'))
+
+aa
+
+## Overall, the attrition rate between job roles seems proportional, with the 
+## exeption of the role of Sales Representative. The table below shows the 
+## attrition rate for each job role. The roles with the most employees have 
+## similar rates. Research Director and Manager have the least amount of 
+## employees leaving. Sales Representatives have the highest rate, with almost 
+## 40% of their employees leaving.
+
+attrition.yes/table(employees$JobRole)
+
+############################################
+## Job Roles and Performance
+## With job roles with performance rating, most employees received an "Excellent" 
+## rating (rating 3). Only about 10-20% of employees received an "Outstanding" 
+## rating (rating 4). Research Directors had the least amount of outstanding 
+## ratings (10%) and Managers had the most amount of outstanding ratings (19.6%).
+
+rating.three <- c(table(employees$JobRole[employees$PerformanceRating == 3]))
+rating.four <- c(table(employees$JobRole[employees$PerformanceRating == 4]))
+rating.role <- data.frame(job.names, rating.three, rating.four)
+
+rr <- plot_ly(rating.role, x = ~job.names, y = ~rating.four, type = 'bar', name = 'Outstanding') %>%
+  add_trace(y = ~rating.three, name = 'Excellent') %>%
+  layout(xaxis = list(title = 'Job Role'), yaxis = list(title = 'Count'), barmode = 'group')
+rr
+
+rating.four/table(employees$JobRole)
+
+## There may be a connection between an employees role, performance and attrition. 
+## Those roles where people received more outstanding ratings tended to have lower 
+## attrition rates.
+
+############################################
+## Distribution of numerical data
+## The current distribution of employees' monthly income is right skewed, 
+## where most people are making less than $10,000 per month. This is expected, 
+## as there are less employees in upper management, who make more than $10,000 
+## per month. 
+dist.num <- plot_ly(employees, x = ~MonthlyIncome, type = "histogram")
+dist.num
+
+############################################
+## Random Sampling, Central Limit Theorem
+## The central limit theorem can be applied to the monthly income variable. 
+## With a sample size of 10, more values are closer to the mean than the original 
+## distribution. The original standard deviation was 4707.957 and the size 10 
+## sample is 1489.324. With each increase in sample size, the mean continues to 
+## stay about the same, but decreases in standard deviation, bring the values 
+## closer to the mean. The sample size of 40 has the most similar mean compared 
+## to the initial data.
+set.seed(284)
+samples <- 1000
+xbar1 <- numeric(samples)
+for (i in 1: samples) {
+  xbar1[i] <- mean(sample(x = employees$MonthlyIncome, size = 10, replace = TRUE))
+}
+
+set.seed(284)
+xbar2 <- numeric(samples)
+for (i in 1: samples) {
+  xbar2[i] <- mean(sample(x = employees$MonthlyIncome, size = 20, replace = TRUE))
+}
+
+set.seed(284)
+xbar3 <- numeric(samples)
+for (i in 1: samples) {
+  xbar3[i] <- mean(sample(x = employees$MonthlyIncome, size = 30, replace = TRUE))
+}
+
+set.seed(284)
+xbar4 <- numeric(samples)
+for (i in 1: samples) {
+  xbar4[i] <- mean(sample(x = employees$MonthlyIncome, size = 40, replace = TRUE))
+}
+
+xbar <- data.frame(xbar1, xbar2, xbar3, xbar4)
+par(mfrow = c(2,2))
+plot_ly(xbar, x = ~xbar1, type = "histogram", name = "Sample Size: 10") %>%
+  add_trace(x = ~xbar2, name = "Sample Size: 20") %>%
+  add_trace(x = ~xbar3, name = "Sample Size: 30") %>%
+  add_trace(x = ~xbar4, name = "Sample Size: 40")
+
+cat(" Initial data", " Mean = ", mean(employees$MonthlyIncome),
+    " SD = ", sd(employees$MonthlyIncome), "\n",
+    "Sample Size = 10", " Mean = ", mean(xbar1),
+    " SD = ", sd(xbar1), "\n",
+    "Sample Size = 20", " Mean = ", mean(xbar2),
+    " SD = ", sd(xbar2), "\n",
+    "Sample Size = 30", " Mean = ", mean(xbar3),
+    " SD = ", sd(xbar3), "\n",
+    "Sample Size = 40", " Mean = ", mean(xbar4),
+    " SD = ", sd(xbar4), "\n")
+
+############################################
+## Sampling Methods
+## The following sections will look at the different kinds of sampling for the 
+## employee dataset.  To see how sampling affects the data, the mean and standard 
+## deviation will be calculated for each type of sampling method.  This will be 
+## compared to the entire dataset.
+
+library(sampling)
+
+############################################
+## Simple Random Sampling
+## For this method of sampling, the number of years 
+## in an employee's current role will be compared.
+
+set.seed(284)
+s <- srswor(100,nrow(employees))
+sample.a <- employees[s != 0, ]
+
+
+## Frequencies of Years in Current Role from Sample
+
+table(sample.a$YearsInCurrentRole)
+
+## Frequencies of Years in Current Role from Dataset
+
+table(employees$YearsInCurrentRole)
+
+## The mean and standard deviation are similar to each other. 
+## However, due to the sampling method, years 16, 17 and 18 were 
+## not included in the sample. This may affect other analysis if not all 
+## years are included.
+
+cat(" Initial data", " Mean = ", mean(employees$YearsInCurrentRole),
+    " SD = ", sd(employees$YearsInCurrentRole), "\n",
+    "Simple Random Sampling", " Mean = ", mean(sample.a$YearsInCurrentRole),
+    " SD = ", sd(sample.a$YearsInCurrentRole), "\n")
+
+############################################
+## Systematic Sampling
+## The Job Satisfaction variable will be compared between the sample 
+## and the whole dataset.
+
+set.seed(284)
+N <- nrow(employees)
+n <- 100
+
+k <- ceiling(N / n)
+k
+
+r <- sample(k, 1)
+r
+
+# select every kth item
+
+s <- seq(r, by = k, length = n)
+
+sample.b <- employees[s, ]
+
+## Use simple sampling without replacement to complete the sample size of 20
+extra <- srswor(2,nrow(employees) - s[98])
+extra
+extra.b <- employees[s[98] : nrow(employees),][extra != 0,]
+sample.b[99,] <- extra.b[1,]  ## replace row values
+sample.b[100,] <- extra.b[2,]  ## replace row values
+
+rownames(sample.b[99,]) <- rownames(extra.b[1,])  ## replace row name
+rownames(sample.b[100,]) <- rownames(extra.b[2,])
+
+## Frequencies of Job Satisfaction from Sample
+
+table(sample.b$JobSatisfaction)
+
+## Frequencies of Job Satisfaction from Dataset
+
+table(employees$JobSatisfaction)
+
+## Proportions from Systematic Sampling
+## Similar to random sampling, the mean and standard deviations 
+## were similar before and after sampling. However, the method pulled 
+## the least amount of samples from the largest section (rating 4). 
+## This may not represent the dataset the best, as most people gave a 
+## score of "Very High" for job satisfaction.
+
+table(sample.b$JobSatisfaction)/table(employees$JobSatisfaction)
+
+
+cat(" Initial data", " Mean = ", mean(employees$JobSatisfaction),
+    " SD = ", sd(employees$JobSatisfaction), "\n",
+    "Systematic Sampling", " Mean = ", mean(sample.b$JobSatisfaction),
+    " SD = ", sd(sample.b$JobSatisfaction), "\n")
+
+############################################
+## Stratified Sampling
+
+set.seed(284)
+order.index <- order(employees$EnvironmentSatisfaction)
+data <- employees[order.index, ]
+
+freq <- table(data$EnvironmentSatisfaction)
+freq
+
+st.sizes <- round(100 * freq / sum(freq))
+st.sizes
+sum(st.sizes)
+
+st <- strata(data, stratanames = c("EnvironmentSatisfaction"),
+             size = st.sizes, method = "srswor",
+             description = TRUE)
+st
+
+sample.d <- getdata(data,st)
+
+## Frequencies of Environment Satisfaction from Sample
+
+table(sample.d$EnvironmentSatisfaction)
+
+## Frequencies of Environment Satisfaction from Dataset
+
+table(employees$EnvironmentSatisfaction)
+
+## Proportion of Stratified Sampling
+
+## Compared to systematic sampling, the stratified sampling has more even 
+## proportions from the dataset.
+table(sample.d$EnvironmentSatisfaction)/table(employees$EnvironmentSatisfaction)
+
+## Compared to the other methods of sampling, 
+## stratified sample is the most similar to the dataset mean and standard deviation.
+
+cat(" Initial data", " Mean = ", mean(employees$EnvironmentSatisfaction),
+    " SD = ", sd(employees$EnvironmentSatisfaction), "\n",
+    "Systematic Sampling", " Mean = ", mean(sample.d$EnvironmentSatisfaction),
+    " SD = ", sd(sample.d$EnvironmentSatisfaction), "\n")
